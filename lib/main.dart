@@ -7,6 +7,7 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text("Dashboard"),
+        
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton(
