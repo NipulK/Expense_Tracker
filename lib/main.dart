@@ -37,6 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
     "Health",
     "Other",
   ];
+  final List<String> _paymentTypes = const [
+    "Cash",
+    "Card",
+    "UPI",
+    "Bank Transfer",
+  ];
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
 
@@ -58,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       builder: (context) {
         String selectedCategory = _categories.first;
+        String selectedPaymentType = _paymentTypes.first;
         return StatefulBuilder(
           builder: (context, setSheetState) {
             return Padding(
@@ -98,11 +105,35 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     },
                   ),
+                  const SizedBox(height: 15),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedPaymentType,
+                    decoration: InputDecoration(
+                      labelText: "Payment Type",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: _paymentTypes
+                        .map(
+                          (type) => DropdownMenuItem<String>(
+                            value: type,
+                            child: Text(type),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setSheetState(() {
+                        selectedPaymentType = value;
+                      });
+                    },
+                  ),
                   const SizedBox(height: 20),
                   TextField(
                     controller: _titleController,
                     decoration: InputDecoration(
-                      labelText: "Title",
+                      labelText: "Title (for Other category)",
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -136,6 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             "title": title,
                             "amount": amount,
                             "category": selectedCategory,
+                            "paymentType": selectedPaymentType,
                           });
                         });
 
@@ -263,8 +295,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               _categoryIcon(expense["category"] ?? "Other"),
                               color: Colors.indigo,
                             ),
-                            title: Text(expense["title"]),
-                            subtitle: Text(expense["category"] ?? "Other"),
+                            title: Text(
+                              expense["category"] == "Other"
+                                  ? expense["title"]
+                                  : expense["category"],
+                            ),
+                            subtitle: Text(
+                              "${expense["paymentType"] ?? "Cash"}",
+                            ),
                             trailing: Text(
                               "- Rs. ${expense["amount"].toStringAsFixed(2)}",
                             ),
