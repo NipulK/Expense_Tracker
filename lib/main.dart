@@ -30,6 +30,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final List<Map<String, dynamic>> _expenses = [];
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
+
+  double get _totalBalance {
+    double total = 0;
+    for (var expense in _expenses) {
+      total += expense["amount"];
+    }
+    return total;
+  }
+
   void _showAddExpenseSheet() {
     showModalBottomSheet(
       context: context,
@@ -57,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
               TextField(
+                controller: _titleController,
                 decoration: InputDecoration(
                   labelText: "Title",
                   border: OutlineInputBorder(
@@ -66,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 15),
               TextField(
+                controller: _amountController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: "Amount",
@@ -80,6 +94,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 45,
                 child: ElevatedButton(
                   onPressed: () {
+                    final title = _titleController.text;
+                    final amount = double.tryParse(_amountController.text);
+
+                    if (title.isEmpty || amount == null) return;
+
+                    setState(() {
+                      _expenses.add({
+                        "title": title,
+                        "amount": amount,
+                      });
+                    });
+
+                    _titleController.clear();
+                    _amountController.clear();
                     Navigator.pop(context);
                   },
                   child: const Text("Save"),
@@ -119,20 +147,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   colors: [Color(0xFF4E54C8), Color(0xFF8F94FB)],
                 ),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     "Total Balance",
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 16,
                     ),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Text(
-                    "Rs. 25,000",
-                    style: TextStyle(
+                    "Rs. ${_totalBalance.toStringAsFixed(2)}",
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -151,28 +179,23 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 15),
             Expanded(
-              child: ListView(
-                children: const [
-                  ListTile(
-                    leading: Icon(Icons.fastfood, color: Colors.orange),
-                    title: Text("Lunch"),
-                    subtitle: Text("Food"),
-                    trailing: Text("- Rs. 450"),
-                  ),
-                  ListTile(
-                    leading: Icon(Icons.directions_bus, color: Colors.blue),
-                    title: Text("Bus Fare"),
-                    subtitle: Text("Transport"),
-                    trailing: Text("- Rs. 120"),
-                  ),
-                  ListTile(
-                    leading: Icon(Icons.shopping_bag, color: Colors.purple),
-                    title: Text("Shopping"),
-                    subtitle: Text("Clothes"),
-                    trailing: Text("- Rs. 2,500"),
-                  ),
-                ],
-              ),
+              child: _expenses.isEmpty
+                  ? const Center(
+                      child: Text("No expenses added yet"),
+                    )
+                  : ListView.builder(
+                      itemCount: _expenses.length,
+                      itemBuilder: (context, index) {
+                        final expense = _expenses[index];
+                        return ListTile(
+                          leading: const Icon(Icons.money, color: Colors.indigo),
+                          title: Text(expense["title"]),
+                          trailing: Text(
+                            "- Rs. ${expense["amount"].toStringAsFixed(2)}",
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
