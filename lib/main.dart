@@ -187,11 +187,35 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemCount: _expenses.length,
                       itemBuilder: (context, index) {
                         final expense = _expenses[index];
-                        return ListTile(
-                          leading: const Icon(Icons.money, color: Colors.indigo),
-                          title: Text(expense["title"]),
-                          trailing: Text(
-                            "- Rs. ${expense["amount"].toStringAsFixed(2)}",
+                        return Dismissible(
+                          key: Key(expense["title"] + index.toString()),
+                          direction: DismissDirection.endToStart,
+                          onDismissed: (direction) {
+                            setState(() {
+                              _expenses.removeAt(index);
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("${expense["title"]} deleted"),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
+                          ),
+                          child: ListTile(
+                            leading: const Icon(Icons.money, color: Colors.indigo),
+                            title: Text(expense["title"]),
+                            trailing: Text(
+                              "- Rs. ${expense["amount"].toStringAsFixed(2)}",
+                            ),
                           ),
                         );
                       },
