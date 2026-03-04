@@ -12,9 +12,7 @@ class ExpenseTrackerApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Expense Tracker',
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-      ),
+      theme: ThemeData(primarySwatch: Colors.indigo),
       home: const LoginScreen(),
     );
   }
@@ -31,8 +29,17 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final List<Map<String, dynamic>> _expenses = [];
+  final List<String> _categories = const [
+    "Food",
+    "Transport",
+    "Bills",
+    "Shopping",
+    "Health",
+    "Other",
+  ];
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
+
 
   double get _totalBalance {
     double total = 0;
@@ -50,84 +57,133 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Add Expense",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+        String selectedCategory = _categories.first;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  labelText: "Title",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Add Expense",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              TextField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: "Amount",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 45,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final title = _titleController.text;
-                    final amount = double.tryParse(_amountController.text);
-
-                    if (title.isEmpty || amount == null) return;
-
-                    setState(() {
-                      _expenses.add({
-                        "title": title,
-                        "amount": amount,
+                  const SizedBox(height: 15),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: "Category",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: _categories
+                        .map(
+                          (category) => DropdownMenuItem<String>(
+                            value: category,
+                            child: Text(category),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setSheetState(() {
+                        selectedCategory = value;
                       });
-                    });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      labelText: "Title",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: "Amount",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 45,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final title = _titleController.text.trim();
+                        final amount = double.tryParse(_amountController.text);
 
-                    _titleController.clear();
-                    _amountController.clear();
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Save"),
-                ),
+                        if (title.isEmpty || amount == null) return;
+
+                        setState(() {
+                          _expenses.add({
+                            "title": title,
+                            "amount": amount,
+                            "category": selectedCategory,
+                          });
+                        });
+
+                        _titleController.clear();
+                        _amountController.clear();
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Save"),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
+  }
+
+  IconData _categoryIcon(String category) {
+    switch (category) {
+      case "Food":
+        return Icons.restaurant;
+      case "Transport":
+        return Icons.directions_bus;
+      case "Bills":
+        return Icons.receipt_long;
+      case "Shopping":
+        return Icons.shopping_bag;
+      case "Health":
+        return Icons.local_hospital;
+      default:
+        return Icons.money;
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _amountController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text("Dashboard"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Dashboard"), centerTitle: true),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.indigo,
         onPressed: _showAddExpenseSheet,
@@ -152,10 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const Text(
                     "Total Balance",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -172,17 +225,12 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 30),
             const Text(
               "Recent Transactions",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
             Expanded(
               child: _expenses.isEmpty
-                  ? const Center(
-                      child: Text("No expenses added yet"),
-                    )
+                  ? const Center(child: Text("No expenses added yet"))
                   : ListView.builder(
                       itemCount: _expenses.length,
                       itemBuilder: (context, index) {
@@ -211,8 +259,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           child: ListTile(
-                            leading: const Icon(Icons.money, color: Colors.indigo),
+                            leading: Icon(
+                              _categoryIcon(expense["category"] ?? "Other"),
+                              color: Colors.indigo,
+                            ),
                             title: Text(expense["title"]),
+                            subtitle: Text(expense["category"] ?? "Other"),
                             trailing: Text(
                               "- Rs. ${expense["amount"].toStringAsFixed(2)}",
                             ),
